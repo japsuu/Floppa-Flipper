@@ -1,4 +1,5 @@
 ﻿using System;
+using FloppaFlipper.Modules;
 using Newtonsoft.Json;
 
 namespace FloppaFlipper
@@ -8,8 +9,20 @@ namespace FloppaFlipper
         [JsonProperty("examine")]
         public string Examine { get; set; }
 
+        private int id;
         [JsonProperty("id")]
-        public int Id { get; set; }
+        public int Id
+        {
+            get => id;
+            set
+            {
+                id = value;
+                Icon = FlipperModule.IconsApiEndpoint + value;
+            }
+            
+        }
+        
+        public string WikiPage { get; set; }
 
         [JsonProperty("members")]
         public bool Members { get; set; }
@@ -26,11 +39,20 @@ namespace FloppaFlipper
         [JsonProperty("highalch")]
         public int HighAlch { get; set; }
 
-        [JsonProperty("icon")]
-        public string Icon { get; set; }
+        public string Icon { get; private set; }
 
+        private string name;
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public string Name
+        {
+            get => name;
+            set
+            {
+                name = value;
+                WikiPage = (FlipperModule.WikiPageApiEndpoint + value).Replace(' ', '_');
+            }
+            
+        }
 
         public string PreviousBuy = "none";
         
@@ -64,8 +86,8 @@ namespace FloppaFlipper
             }
         }
 
-        public DateTime BuyTime;
-        public DateTime SellTime;
+        public DateTime LatestBuyTime;
+        public DateTime LatestSellTime;
 
         public override string ToString()
         {
@@ -85,5 +107,5 @@ namespace FloppaFlipper
         {
             return 100 * (latestVal - currentVal) / (double)Math.Abs(currentVal);
         }
-    } 
+    }
 }

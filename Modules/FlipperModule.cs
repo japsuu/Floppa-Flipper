@@ -16,6 +16,9 @@ namespace FloppaFlipper.Modules
     {
         private const string PricesApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/latest";
         private const string ItemInfoApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/mapping";
+        public const string IconsApiEndpoint = "https://secure.runescape.com/m=itemdb_oldschool/obj_big.gif?id=";
+        public const string WikiPageApiEndpoint = "https://oldschool.runescape.wiki/w/";
+        public const string OfficialPricePageApiEndpoint = "https://prices.runescape.wiki/osrs/item/";
         
         private static readonly Dictionary<int, ItemInfo> InfoDict = new();
         private static List<ItemInfo> infoList = new();
@@ -26,29 +29,33 @@ namespace FloppaFlipper.Modules
         public async Task SendRichEmbedAsync()
         {
             var embed = new EmbedBuilder();
+            
+            //TODO: Also show 1h prices, and 12h prices. Perform the dip check on those.
+            
+            embed
+                .WithTitle("**Item Name** | potential dip!")
+                
+                .WithDescription(
+                    "[Wiki](https://test.com) | [prices.runescape.wiki](https://prices.runescape.wiki/osrs/item/64) | [GE-tracker](https://www.ge-tracker.com/item/64)")
+                
+                .WithThumbnailUrl(IconsApiEndpoint + 64)
+                
+                .WithColor(GetColorByPercent(18.12))
+                
+                .WithFooter(footer => footer.Text = "Flip fo no hoe")
+                
+                .WithCurrentTimestamp();
 
-            embed.AddField("Generic item info",
-                    "Link to item in the [wiki](https://wiki.com)")
-                .WithFooter(footer => footer.Text = "I am a footer.")
-                .WithColor(Color.Blue)
-                .WithTitle("I overwrote \"Hello world!\"")
-                .WithDescription("I am a description.")
-                .WithUrl("https://example.com")
-                .WithCurrentTimestamp()
-                .WithThumbnailUrl("https://i1.sndcdn.com/artworks-eXRx47ZqsXmCG10I-CUQ2fA-t500x500.jpg");
+
+            embed
+                .AddField(Emote.Parse("<:Buy:894836544442093568>") + "**Buy price** `has changed 18.12%`:", "\tChanged from `123` to `234`");
+
+
+            embed
+                .AddField(Emote.Parse("<:Sell:894836591590256660>") + "**Sell price** `has changed 18.12%`:", "\tChanged from `123` to `234`");
 
             //Your embed needs to be built before it is able to be sent
             await ReplyAsync(embed: embed.Build());
-        }
-        
-        [Command("update")]
-        [Summary("Forcefully updates the prices of all items.")]
-        public Task UpdatePrices()
-        {
-            FetchItemPrices();
-            
-            var tUp = new Emoji("👍");
-            return Context.Message.AddReactionAsync(tUp);
         }
         
         [Command("show")]
@@ -59,15 +66,17 @@ namespace FloppaFlipper.Modules
             {
                 var embed = new EmbedBuilder();
 
-                embed.AddField($"Changed from {info.PreviousBuy} to {info.CurrentBuy}",
-                        "Link to item in the [wiki](https://wiki.com)")
-                    .WithFooter(footer => footer.Text = "Flop fo no hoe")
+                string change = "Dropped";
+                if (double.Parse(info.CurrentBuy) > double.Parse(info.PreviousBuy)) change = "Increased";
+
+                embed.AddField($"{change} from {info.PreviousBuy} to {info.CurrentBuy}",
+                        $"[Wiki]({info.WikiPage})")
+                    .WithFooter(footer => footer.Text = "Flip fo no hoe")
                     .WithColor(Color.Blue)
                     .WithTitle(info.Name)
                     .WithDescription($"price has changed {info.GetChangePercentage():F2}%")
                     .WithCurrentTimestamp()
-                    .WithThumbnailUrl("https://secure.runescape.com/m=itemdb_oldschool/1633359101944_obj_big.gif?id=8");
-                
+                    .WithThumbnailUrl(info.Icon);
                 
                 ReplyAsync(embed: embed.Build());
             }
@@ -89,17 +98,16 @@ namespace FloppaFlipper.Modules
         {
             Console.WriteLine("Querying item data...");
             
+            // Connect to the item info API...
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(ItemInfoApiEndpoint);
-            
             request.UserAgent = "FloppaFlipper - Japsu#8887";
             request.Method = "GET";
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             
-            HttpWebResponse infoResponse = (HttpWebResponse)request.GetResponse();
-            
-            Console.WriteLine("Connection: " + infoResponse.StatusCode);
+            Console.WriteLine("Connection: " + response.StatusCode);
 
             string infoJsonString;
-            using (Stream stream = infoResponse.GetResponseStream())
+            using (Stream stream = response.GetResponseStream())
             {
                 StreamReader reader = new StreamReader(stream, System.Text.Encoding.UTF8);
                 infoJsonString = reader.ReadToEnd();
@@ -161,14 +169,14 @@ namespace FloppaFlipper.Modules
                     {
                         DateTime highTime = UnixTimeStampToDateTime(unixH);
                         
-                        itemInfo.BuyTime = highTime;
+                        itemInfo.LatestBuyTime = highTime;
                     }
 
                     if (double.TryParse((string) value["lowTime"] ?? string.Empty, out double unixL))
                     {
                         DateTime lowTime = UnixTimeStampToDateTime(unixL);
                         
-                        itemInfo.SellTime = lowTime;
+                        itemInfo.LatestSellTime = lowTime;
                     }
                     
                     string high = (string)value["high"];
@@ -187,6 +195,40 @@ namespace FloppaFlipper.Modules
             DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             dateTime = dateTime.AddSeconds( unixTimeStamp ).ToLocalTime();
             return dateTime;
+        }
+
+        private static Color GetColorByPercent(double percent)
+        {
+            Color color = Color.Default;
+
+            switch (percent)
+            {
+                case < 5:
+                {
+                    color = Color.Blue;
+                    break;
+                }
+                
+                case < 10:
+                {
+                    color = Color.LightOrange;
+                    break;
+                }
+                
+                case < 20:
+                {
+                    color = Color.Orange;
+                    break;
+                }
+                
+                case > 20:
+                {
+                    color = Color.Red;
+                    break;
+                }
+            }
+
+            return color;
         }
     }
 }
