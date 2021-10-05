@@ -18,8 +18,8 @@ namespace FloppaFlipper
             {
                 id = value;
                 Icon = FlipperModule.IconsApiEndpoint + value;
+                WikiPage = FlipperModule.WikiApiEndpoint + value;
             }
-            
         }
         
         public string WikiPage { get; set; }
@@ -38,22 +38,13 @@ namespace FloppaFlipper
 
         [JsonProperty("highalch")]
         public int HighAlch { get; set; }
-
+        
         public string Icon { get; private set; }
 
-        private string name;
         [JsonProperty("name")]
-        public string Name
-        {
-            get => name;
-            set
-            {
-                name = value;
-                WikiPage = (FlipperModule.WikiPageApiEndpoint + value).Replace(' ', '_');
-            }
-            
-        }
+        public string Name { get; set; }
 
+        [Obsolete("Use DatedItemInfo.")]
         public string PreviousBuy = "none";
         
         private string currentBuy = "none";
@@ -70,6 +61,7 @@ namespace FloppaFlipper
             }
         }
         
+        [Obsolete("Use DatedItemInfo.")]
         public string PreviousSell = "none";
         
         private string currentSell = "none";
@@ -86,8 +78,14 @@ namespace FloppaFlipper
             }
         }
 
-        public DateTime LatestBuyTime;
-        public DateTime LatestSellTime;
+        public DateTime LatestAvailableBuyTime;
+        public DateTime LatestAvailableSellTime;
+
+        public DatedItemInfo _1hInfo { get; set; }
+        public DatedItemInfo _6hInfo { get; set; }
+        public DatedItemInfo _24hInfo { get; set; }
+
+        public DateTime TimeLastNotified;
 
         public override string ToString()
         {
@@ -98,14 +96,58 @@ namespace FloppaFlipper
         /// 
         /// </summary>
         /// <returns>How many percents the item's value has changed since the last check.</returns>
-        public double GetChangePercentage()
+        public double GetChangePercentage(bool isBuy)
         {
-            return -ChangePercentage(long.Parse(currentBuy), long.Parse(PreviousBuy));
+            if (isBuy)
+            {
+                if (!long.TryParse(currentBuy, out long resultCur)) return 0;
+                if (!long.TryParse(_1hInfo.AvgBuyPrice, out long result1H)) return 0;
+            
+                return -ChangePercentage(resultCur, result1H);
+            }
+            else
+            {
+                if (!long.TryParse(currentSell, out long resultCur)) return 0;
+                if (!long.TryParse(_1hInfo.AvgSellPrice, out long result1H)) return 0;
+            
+                return -ChangePercentage(resultCur, result1H);
+            }
         }
 
         private static double ChangePercentage(long currentVal, long latestVal)
         {
             return 100 * (latestVal - currentVal) / (double)Math.Abs(currentVal);
+        }
+    }
+
+    public class DatedItemInfo
+    {
+        private string avgBuyPrice;
+        public string AvgBuyPrice
+        {
+            get => string.IsNullOrEmpty(avgBuyPrice) ? "not available" : avgBuyPrice;
+            set => avgBuyPrice = value;
+        }
+
+        private string buyPriceVolume;
+        public string BuyPriceVolume
+        {
+            get => string.IsNullOrEmpty(buyPriceVolume) ? "not available" : buyPriceVolume;
+            set => buyPriceVolume = value;
+        }
+        
+        private string avgSellPrice;
+        public string AvgSellPrice
+        {
+            get => string.IsNullOrEmpty(avgSellPrice) ? "not available" : avgSellPrice;
+            set => avgSellPrice = value;
+        }
+
+        private string sellPriceVolume;
+        public string SellPriceVolume
+        {
+            get => string.IsNullOrEmpty(sellPriceVolume) ? "not available" : sellPriceVolume;
+            set => sellPriceVolume = value;
         }
     }
 }

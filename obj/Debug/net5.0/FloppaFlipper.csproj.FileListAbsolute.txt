@@ -37,3 +37,41 @@ C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Configuration.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Console.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.exe
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.deps.json
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.runtimeconfig.json
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.runtimeconfig.dev.json
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\ref\FloppaFlipper.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.pdb
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Discord.Net.Commands.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Discord.Net.Core.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Discord.Net.Rest.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Discord.Net.Webhook.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Discord.Net.WebSocket.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.Abstractions.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.Binder.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.DependencyInjection.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Abstractions.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Configuration.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Console.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Options.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Microsoft.Extensions.Primitives.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\Newtonsoft.Json.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\System.Interactive.Async.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\System.Linq.Async.dll
+D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\System.Runtime.CompilerServices.Unsafe.dll
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.csproj.AssemblyReference.cache
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.GeneratedMSBuildEditorConfig.editorconfig
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.AssemblyInfoInputs.cache
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.AssemblyInfo.cs
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.csproj.CoreCompileInputs.cache
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.csproj.CopyComplete
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.dll
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\ref\FloppaFlipper.dll
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.pdb
+D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.genruntimeconfig.cache

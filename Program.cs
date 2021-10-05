@@ -19,9 +19,12 @@ namespace FloppaFlipper
         /// <summary>
         /// In seconds.
         /// </summary>
-        private const int RefreshRate = 20;
-        
-        public const float MinRoiChange = 10;
+        private const int RefreshRate = 30;
+
+        /// <summary>
+        /// In minutes.
+        /// </summary>
+        public const int ItemNotificationCooldown = 5;
         
         public static void Main(string[] args)
             => new Program().MainAsync().GetAwaiter().GetResult();
@@ -45,10 +48,11 @@ namespace FloppaFlipper
             {
                 Console.WriteLine("Bot is connected!");
                 
-                FlipperModule.FetchItemData();
+                FlipperModule.FetchItemMappings();
                 FlipperModule.Timer.Interval = RefreshRate * 1000;
                 FlipperModule.Timer.Elapsed += FlipperModule.TimerTick;
                 FlipperModule.Timer.Start();
+                FlipperModule.TimerTick(null, null);
                 
                 return Task.CompletedTask;
             };
