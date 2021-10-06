@@ -169,4 +169,10 @@ namespace FloppaFlipper
         [JsonProperty("lowPriceVolume")]
         public int? LowPriceVolume { get; set; }
     }
+
+    public class PriceNotificationData
+    {
+        public ItemInfo ItemToTrack;
+        public long PriceToNotifyAt;
+    }
 }

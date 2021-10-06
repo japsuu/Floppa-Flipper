@@ -24,7 +24,12 @@ namespace FloppaFlipper
         /// In minutes.
         /// </summary>
         public const int ItemNotificationCooldown = 15;
+        
         public const int MaxSparklineDatasetLength = 1800;
+
+        public const int MinTradedVolume = 10000;
+        
+        public const int MinBuyPrice = 200;
         
         public static void Main(string[] args)
             => new Program().MainAsync().GetAwaiter().GetResult();

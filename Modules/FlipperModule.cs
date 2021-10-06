@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QuickChart;
@@ -36,6 +37,8 @@ namespace FloppaFlipper.Modules
         
         private static readonly Dictionary<int, ItemInfo> InfoDict = new();
         private static List<ItemInfo> infoList = new();
+        
+        private static readonly Dictionary<SocketUser, >
 
         public static readonly Timer Timer = new();
         
@@ -95,7 +98,9 @@ namespace FloppaFlipper.Modules
                 if(item._24hInfo == null) continue;
                 if(item._6hInfo == null) continue;
                 if(item._1hInfo == null) continue;
-                if(long.Parse(item._24hInfo.AvgBuyPrice) < 100) continue;
+                
+                // Check that the item price is great enough
+                if(!long.TryParse(item._24hInfo.AvgBuyPrice, out long price) || price < Program.MinBuyPrice) continue;
                 
                 // Check if the item has not raised a notification in a while
                 if(DateTime.Now.Subtract(item.TimeLastNotified).TotalMinutes < Program.ItemNotificationCooldown) continue;
@@ -108,13 +113,16 @@ namespace FloppaFlipper.Modules
                 
                 // Check that the item has been traded in the last hour
                 if(!long.TryParse(item._1hInfo.BuyPriceVolume, out long result) || result < 3) continue;
-
-                #region Building the sparkline
-
+                
+                // Check that the item has great enough volume
+                if(!long.TryParse(item._24hInfo.BuyPriceVolume, out long volume) || volume < Program.MinTradedVolume) continue;
+                
                 // Get the 5m time series for this item
                 string timeSeriesJson = FetchPriceJson(TimeSeriesApiEndpoint, item.Id);
                 
                 List<TimeSeriesDataSet> dataSets = JsonConvert.DeserializeObject<List<TimeSeriesDataSet>>(timeSeriesJson);
+
+                #region Building the sparkline
 
                 if (dataSets == null)
                 {
@@ -124,12 +132,18 @@ namespace FloppaFlipper.Modules
 
                 string labelsString = "";
                 string dataString = "";
-                foreach (TimeSeriesDataSet dataSet in dataSets.Skip(Math.Max(0, dataSets.Count - 300)))
+                foreach (TimeSeriesDataSet dataSet in dataSets.Skip(Math.Max(0, dataSets.Count - 100)))
                 {
-                    if(dataSet.AvgHighPrice == null) continue;
-
-                    labelsString += $"'{UnixTimeStampToDateTime(dataSet.Timestamp).ToLongTimeString()}'";
-                    dataString += dataSet.AvgHighPrice;
+                    if (dataSet.AvgHighPrice == null)
+                    {
+                        labelsString += $"'{UnixTimeStampToDateTime(dataSet.Timestamp).ToLongTimeString()}'";
+                        dataString += "null";
+                    }
+                    else
+                    {
+                        labelsString += $"'{UnixTimeStampToDateTime(dataSet.Timestamp).ToLongTimeString()}'";
+                        dataString += dataSet.AvgHighPrice;
+                    }
                     
                     if(dataString.Length > Program.MaxSparklineDatasetLength || labelsString.Length > Program.MaxSparklineDatasetLength)
                         break;
@@ -140,20 +154,19 @@ namespace FloppaFlipper.Modules
 
                 Chart qc = new Chart();
 
-                qc.Width = 500;
-                qc.Height = 300;
+                qc.Width = 300;
+                qc.Height = 250;
                 qc.Config = @"
 {
     type: 'line',
-    width: '20',
-    height: '40',
   data: {
     labels:[" + labelsString + @"],
     datasets: [{
       label: 'Buy price',
       pointRadius: 1.5,
       borderWidth: 1,
-      lineTension: 0,
+      lineTension: 0.2,
+      spanGaps: 'true',
       backgroundColor: 'rgba(255, 0, 0, 0.2)',
       borderColor: 'red',
       data: [" + dataString + @"]
