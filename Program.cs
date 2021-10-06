@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading.Tasks;
-using System.Timers;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -24,7 +23,8 @@ namespace FloppaFlipper
         /// <summary>
         /// In minutes.
         /// </summary>
-        public const int ItemNotificationCooldown = 5;
+        public const int ItemNotificationCooldown = 15;
+        public const int MaxSparklineDatasetLength = 1800;
         
         public static void Main(string[] args)
             => new Program().MainAsync().GetAwaiter().GetResult();
@@ -37,7 +37,7 @@ namespace FloppaFlipper
         {
             var config = new DiscordSocketConfig { MessageCacheSize = 100 };
             socketClient = new DiscordSocketClient(config);
-            var cConfig = new CommandServiceConfig {CaseSensitiveCommands = false};
+            var cConfig = new CommandServiceConfig { CaseSensitiveCommands = false };
             commandService = new CommandService(cConfig);
 
             commandHandler = new CommandHandler(socketClient, commandService);

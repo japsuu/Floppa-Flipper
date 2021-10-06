@@ -30,7 +30,6 @@ C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Abstractions.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Options.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Primitives.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\System.Diagnostics.DiagnosticSource.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.Abstractions.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.Binder.dll
@@ -75,3 +74,4 @@ D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.dll
 D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\ref\FloppaFlipper.dll
 D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.pdb
 D:\Rider Projects\floppa-flipper\obj\Debug\net5.0\FloppaFlipper.genruntimeconfig.cache
+C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\QuickChart.dll

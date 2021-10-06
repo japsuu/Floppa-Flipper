@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using FloppaFlipper.Modules;
 using Newtonsoft.Json;
 
@@ -101,22 +102,22 @@ namespace FloppaFlipper
             if (isBuy)
             {
                 if (!long.TryParse(currentBuy, out long resultCur)) return 0;
-                if (!long.TryParse(_1hInfo.AvgBuyPrice, out long result1H)) return 0;
+                if (!long.TryParse(_6hInfo.AvgBuyPrice, out long result1H)) return 0;
             
-                return -ChangePercentage(resultCur, result1H);
+                return ChangePercentage(result1H, resultCur);
             }
             else
             {
                 if (!long.TryParse(currentSell, out long resultCur)) return 0;
-                if (!long.TryParse(_1hInfo.AvgSellPrice, out long result1H)) return 0;
+                if (!long.TryParse(_6hInfo.AvgSellPrice, out long result1H)) return 0;
             
-                return -ChangePercentage(resultCur, result1H);
+                return ChangePercentage(result1H, resultCur);
             }
         }
 
-        private static double ChangePercentage(long currentVal, long latestVal)
+        private static double ChangePercentage(long oldVal, long newVal)
         {
-            return 100 * (latestVal - currentVal) / (double)Math.Abs(currentVal);
+            return 100 * (newVal - oldVal) / (double)Math.Abs(oldVal);
         }
     }
 
@@ -149,5 +150,23 @@ namespace FloppaFlipper
             get => string.IsNullOrEmpty(sellPriceVolume) ? "not available" : sellPriceVolume;
             set => sellPriceVolume = value;
         }
+    }
+
+    public class TimeSeriesDataSet
+    {
+        [JsonProperty("timestamp")]
+        public long Timestamp { get; set; }
+
+        [JsonProperty("avgHighPrice")]
+        public int? AvgHighPrice { get; set; }
+
+        [JsonProperty("avgLowPrice")]
+        public int? AvgLowPrice { get; set; }
+
+        [JsonProperty("highPriceVolume")]
+        public int? HighPriceVolume { get; set; }
+
+        [JsonProperty("lowPriceVolume")]
+        public int? LowPriceVolume { get; set; }
     }
 }

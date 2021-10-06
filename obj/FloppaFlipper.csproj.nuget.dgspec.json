@@ -1,18 +1,21 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj": {}
+    "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj": {}
   },
   "projects": {
-    "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj": {
+    "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj",
+        "projectUniqueName": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj",
         "projectName": "FloppaFlipper",
-        "projectPath": "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj",
+        "projectPath": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj",
         "packagesPath": "C:\\Users\\japsu\\.nuget\\packages\\",
-        "outputPath": "D:\\Rider Projects\\floppa-flipper\\obj\\",
+        "outputPath": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
         "configFilePaths": [
           "C:\\Users\\japsu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
@@ -22,6 +25,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Users\\japsu\\Downloads": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -59,6 +63,10 @@
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.1, )"
+            },
+            "QuickChart": {
+              "target": "Package",
+              "version": "[2.1.0, )"
             }
           },
           "imports": [
@@ -76,7 +84,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
         }
       }
     }
