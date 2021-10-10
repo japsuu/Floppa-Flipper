@@ -1,244 +1,158 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
-using FloppaFlipper.Modules;
+using FloppaFlipper.Handlers;
+using FloppaFlipper.Services;
 
 namespace FloppaFlipper
 {
-    
-    /// <summary>
-    /// TODO: Change to using a config file like in BoltMailer.
-    /// </summary>
-    
-    internal class Program
+    internal static class Program
     {
-        private const string BotToken = "ODk0NDYxMjQwMDYyMTE1ODcw.YVqV8Q.w5nXVT80cQXYkLIqueq57rdFxLg";
-        /// <summary>
-        /// In seconds.
-        /// </summary>
-        private const int RefreshRate = 30;
-
-        /// <summary>
-        /// In minutes.
-        /// </summary>
-        public const int ItemNotificationCooldown = 15;
-        
-        public const int MaxSparklineDatasetLength = 1800;
-
-        public const int MinTradedVolume = 10000;
-        
-        public const int MinBuyPrice = 200;
-        
         public static void Main(string[] args)
-            => new Program().MainAsync().GetAwaiter().GetResult();
-        
-        private DiscordSocketClient socketClient;
-        private CommandService commandService;
-        private CommandHandler commandHandler;
-
-        private async Task MainAsync()
         {
-            var config = new DiscordSocketConfig { MessageCacheSize = 100 };
-            socketClient = new DiscordSocketClient(config);
-            var cConfig = new CommandServiceConfig { CaseSensitiveCommands = false };
-            commandService = new CommandService(cConfig);
+            // Read the config on startup
+            if (ConfigHandler.Init())
+            {
+                MainAsync().GetAwaiter().GetResult();
+            }
+            else
+            {
+                Console.WriteLine("Config could not be read successfully. Aborting startup.");
+                Console.WriteLine("Press any key to exit.");
 
+                Console.ReadKey();
+            }
+        }
+
+        private static DiscordSocketClient socketClient;
+        private static CommandService commandService;
+        private static CommandHandler commandHandler;
+        private static LoggingService loggingService;
+        private static FlipFinderService flipFinderService;
+
+        private static async Task MainAsync()
+        {
+            // Create the Discord socket client
+            DiscordSocketConfig config = new DiscordSocketConfig { MessageCacheSize = 100 };
+            socketClient = new DiscordSocketClient(config);
+            
+            // Create the command service
+            CommandServiceConfig cConfig = new CommandServiceConfig { CaseSensitiveCommands = false };
+            commandService = new CommandService(cConfig);
+            
+            // Create the logging service
+            loggingService = new LoggingService(socketClient, commandService);
+            
+            // Create the data fetch service
+            flipFinderService = new FlipFinderService(loggingService, socketClient);
+
+            // Create the command handler
             commandHandler = new CommandHandler(socketClient, commandService);
 
-            socketClient.Log += Log;
-            socketClient.MessageUpdated += MessageUpdated;
+            // Subscribe to events
+            socketClient.MessageUpdated += OnMessageUpdated;
+            socketClient.InteractionCreated += OnClientInteractionCreated;
             socketClient.Ready += () =>
             {
-                Console.WriteLine("Bot is connected!");
+                Console.WriteLine("[INFO]: Socket client is ready.");
                 
-                FlipperModule.FetchItemMappings();
-                FlipperModule.Timer.Interval = RefreshRate * 1000;
-                FlipperModule.Timer.Elapsed += FlipperModule.TimerTick;
-                FlipperModule.Timer.Start();
-                FlipperModule.TimerTick(null, null);
+                socketClient.SetActivityAsync(new Game(" the GE-prices.", ActivityType.Watching, ActivityProperties.None,
+                    "Try !help for a list of commands."));
                 
                 return Task.CompletedTask;
             };
 
-            await socketClient.LoginAsync(TokenType.Bot, BotToken);
+            // Login and start the bot
+            await socketClient.LoginAsync(TokenType.Bot, ConfigHandler.Config.BotToken);
             await socketClient.StartAsync();
 
+            // Start the flip finder
+            await flipFinderService.Start();
+
+            // Initialize the commands
             await commandHandler.InstallCommandsAsync();
 
+            // Never exit this async context
             await Task.Delay(-1);
         }
 
-        private async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel)
+        private static async Task OnMessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after, ISocketMessageChannel channel)
         {
             // If the message was not in the cache, downloading it will result in getting a copy of `after`.
             var message = await before.GetOrDownloadAsync();
             Console.WriteLine($"{message} -> {after}");
         }
-        
-        private static Task Log(LogMessage msg)
+
+        private static async Task OnClientInteractionCreated(SocketInteraction interaction)
         {
-            Console.WriteLine(msg.ToString());
-            return Task.CompletedTask;
+            // Checking the type of this interaction
+            switch (interaction)
+            {
+                // Slash commands
+                case SocketSlashCommand commandInteraction:
+                    await SlashCommandHandler(commandInteraction);
+                    break;
+      
+                // Button clicks/selection dropdowns
+                case SocketMessageComponent componentInteraction:
+                    await MessageComponentHandler(componentInteraction);
+                    break;
+      
+                // Unused or Unknown/Unsupported
+                default:
+                    break;
+            }
+        }
+        
+        private static async Task SlashCommandHandler(SocketSlashCommand interaction)
+        {
+            // Checking command name
+            if (interaction.Data.Name == "ping")
+            {
+                // Respond to interaction with message.
+                // You can also use "ephemeral" so that only the original user of the interaction sees the message
+                await interaction.RespondAsync($"Pong!", ephemeral: true);
+      
+                // Also you can followup with a additional messages, which also can be "ephemeral"
+                await interaction.FollowupAsync($"PongPong!", ephemeral: true);
+            }
+        }
+        
+        private static async Task MessageComponentHandler(SocketMessageComponent interaction)
+        {
+            // Get the custom ID 
+            string customId = interaction.Data.CustomId;
+            
+            // Get the user
+            SocketGuildUser user = (SocketGuildUser) interaction.User;
+            
+            string selectedValue = interaction.Data.Values.First();
+
+            switch (customId)
+            {
+                case "NotifyMeSelectMenu":
+                {
+                    await user.SendMessageAsync("I'll make sure to give you a heads up when the price spikes again!");
+                    
+                    //FlipperModule.OngoingPriceNotifications.Add(user, );
+                    
+                    break;
+                }
+                default:
+                    break;
+            }
+    
+            // Respond with the update message. This edits the message which this component resides.
+            //await interaction.UpdateAsync(msgProps => msgProps.Content = $"Clicked {interaction.Data.CustomId}!");
+    
+            // Also you can followup with a additional messages
+            //await interaction.FollowupAsync($"Clicked {interaction.Data.CustomId}!", ephemeral: true);
+    
+            // If you are using selection dropdowns, you can get the selected label and values using these
+            //var selectedLabel = ((SelectMenu) interaction.Message.Components.First().Components.First()).Options.FirstOrDefault(x => x.Value == interaction.Data.Values.FirstOrDefault())?.Label;
         }
     }
-    
-    
-    
-    /*
-    internal static class Program
-    {
-        private const string PricesApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/latest";
-        private const string ItemInfoApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/mapping";
-        private const string BotToken = "ODk0NDYxMjQwMDYyMTE1ODcw.YVqV8Q.w5nXVT80cQXYkLIqueq57rdFxLg";
-        
-        private static readonly Dictionary<int, ItemInfo> InfoDict = new();
-        private static List<ItemInfo> infoList = new();
-        
-        private static ServiceProvider ConfigureServices()
-        {
-            return new ServiceCollection()
-                .AddSingleton<DiscordSocketClient>()
-                .AddSingleton<CommandService>()
-                .AddSingleton<CommandHandlingService>()
-                .AddSingleton<HttpClient>()
-                .AddSingleton<PictureService>()
-                .BuildServiceProvider();
-        }
-        
-        public static void Main(string[] args)
-            => MainAsync().GetAwaiter().GetResult();
-
-        private static async Task MainAsync()
-        {
-            await using var services = ConfigureServices();
-            
-            var client = services.GetRequiredService<DiscordSocketClient>();
-
-            client.Log += LogAsync;
-            client.Ready += ReadyAsync;
-            services.GetRequiredService<CommandService>().Log += LogAsync;
-
-            await client.LoginAsync(TokenType.Bot, BotToken);
-            await client.StartAsync();
-
-            // Here we initialize the logic required to register our commands.
-            await services.GetRequiredService<CommandHandlingService>().InitializeAsync();
-
-            await Task.Delay(-1);
-        }
-        
-        private static Task ReadyAsync()
-        {
-            Console.WriteLine("We are connected!");
-
-            return Task.CompletedTask;
-        }
-        
-        private static Task LogAsync(LogMessage msg)
-        {
-            Console.WriteLine(msg.ToString());
-            return Task.CompletedTask;
-        }
-
-        private static void GetItemData()
-        {
-            Console.WriteLine("Querying item data...");
-            
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(ItemInfoApiEndpoint);
-            
-            request.UserAgent = "FloppaFlipper - Japsu#8887";
-            request.Method = "GET";
-            
-            HttpWebResponse infoResponse = (HttpWebResponse)request.GetResponse();
-            
-            Console.WriteLine("Connection: " + infoResponse.StatusCode);
-
-            string infoJsonString;
-            using (Stream stream = infoResponse.GetResponseStream())
-            {
-                StreamReader reader = new StreamReader(stream, System.Text.Encoding.UTF8);
-                infoJsonString = reader.ReadToEnd();
-            }
-            
-            infoList = JsonConvert.DeserializeObject<List<ItemInfo>>(infoJsonString);
-            
-            if (infoList == null) return;
-            
-            foreach (ItemInfo info in infoList)
-            {
-                InfoDict.Add(info.Id, info);
-            }
-            
-            Console.WriteLine("Done!\n");
-        }
-        
-        private static void GetPrices()
-        {
-            Console.WriteLine("Querying prices...");
-            
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(PricesApiEndpoint);
-
-            request.UserAgent = "FloppaFlipper - Japsu#8887";
-            request.Method = "GET";
-
-            HttpWebResponse priceResponse = (HttpWebResponse)request.GetResponse();
-
-            Console.WriteLine("Connection: " + priceResponse.StatusCode);
-
-            string priceJsonString;
-            using (Stream stream = priceResponse.GetResponseStream())
-            {
-                StreamReader reader = new StreamReader(stream, System.Text.Encoding.UTF8);
-                priceJsonString = reader.ReadToEnd();
-            }
-
-            priceJsonString = priceJsonString[8..];
-            priceJsonString = priceJsonString.Remove(priceJsonString.Length - 1);
-
-            priceJsonString = priceJsonString.Insert(0, "[");
-            priceJsonString = priceJsonString.Insert(priceJsonString.Length, "]");
-            
-            JArray priceObjects = JArray.Parse(priceJsonString); // parse as array  
-
-            foreach(var jToken in priceObjects)
-            {
-                var root = (JObject) jToken;
-                foreach((string itemId, var value) in root)
-                {
-                    if (!InfoDict.TryGetValue(int.Parse(itemId), out ItemInfo itemInfo)) continue;
-                    
-                    if(double.TryParse((string) value["highTime"] ?? string.Empty, out double unixH))
-                    {
-                        DateTime highTime = UnixTimeStampToDateTime(unixH);
-                        
-                        itemInfo.HighTime = highTime;
-                    }
-
-                    if (double.TryParse((string) value["lowTime"] ?? string.Empty, out double unixL))
-                    {
-                        DateTime lowTime = UnixTimeStampToDateTime(unixL);
-                        
-                        itemInfo.LowTime = lowTime;
-                    }
-                    
-                    string high = (string)value["high"];
-                    itemInfo.High = high;
-                    
-                    string low = (string)value["low"];
-                    itemInfo.Low = low;
-                }
-            }
-            
-            Console.WriteLine("Done!");
-        }
-
-        private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
-        {
-            DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            dateTime = dateTime.AddSeconds( unixTimeStamp ).ToLocalTime();
-            return dateTime;
-        }
-    }*/
 }

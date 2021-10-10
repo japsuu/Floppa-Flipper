@@ -8,6 +8,8 @@ using System.Timers;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using FloppaFlipper.Datasets;
+using FloppaFlipper.Handlers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QuickChart;
@@ -16,29 +18,11 @@ namespace FloppaFlipper.Modules
 {
     public class FlipperModule : ModuleBase<SocketCommandContext>
     {
-        // Price endpoints
-        private const string LatestPricesApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/latest";
-        private const string _1HourPricesApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/1h";
-        private const string _6HourPricesApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/6h";
-        private const string _24HourPricesApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/24h";
-        
-        // Mapping / Info endpoints
-        private const string MappingApiEndpoint = "https://prices.runescape.wiki/api/v1/osrs/mapping";
-        public const string IconsApiEndpoint = "https://secure.runescape.com/m=itemdb_oldschool/obj_big.gif?id=";
-        public const string WikiApiEndpoint = "https://oldschool.runescape.wiki/w/Special:Lookup?type=item&id=";
-        
-        // Price info endpoints
-        private const string PriceInfoPageApiEndpoint = "https://prices.runescape.wiki/osrs/item/";
-        private const string GeTrackerPageApiEndpoint = "https://www.ge-tracker.com/item/";
-        
-        // TimeSeries endpoint
-        private const string TimeSeriesApiEndpoint =
-            "https://prices.runescape.wiki/api/v1/osrs/timeseries?timestep=5m&id=";
-        
-        private static readonly Dictionary<int, ItemInfo> InfoDict = new();
-        private static List<ItemInfo> infoList = new();
-        
-        private static readonly Dictionary<SocketUser, >
+        /*
+        private static readonly Dictionary<int, ItemDataSet> InfoDict = new();
+        private static List<ItemDataSet> infoList = new();
+
+        //public static readonly Dictionary<SocketUser, PriceNotificationDataSet> OngoingPriceNotifications = new();
 
         public static readonly Timer Timer = new();
         
@@ -48,35 +32,57 @@ namespace FloppaFlipper.Modules
             EmbedBuilder embed = new();
             
             embed
-                .WithTitle("**Item Name** | potential dip!")
+                .WithTitle("**TEST** | This is a test!")
                 
                 .WithDescription(
                     "[Wiki](https://test.com) | [prices.runescape.wiki](https://prices.runescape.wiki/osrs/item/64) | [GE-tracker](https://www.ge-tracker.com/item/64)")
                 
                 .WithThumbnailUrl(IconsApiEndpoint + 64)
                 
-                .WithColor(GetColorByPercent(18.12))
+                .WithColor(Color.Gold)
                 
                 .WithFooter(footer => footer.Text = "Flip fo no hoe")
                 
                 .WithCurrentTimestamp();
+            
+            
+            var textChannel = (SocketTextChannel)Context.Channel;
+            var thread = await textChannel.CreateThreadAsync("Test thread!");
 
+            await thread.SendMessageAsync("Test test, can you hear me?");
 
-            embed
-                .AddField(Emote.Parse("<:Buy:894836544442093568>") + "**Buy price** `has changed 18.12%`:", "\tChanged from `123` to `234`");
+            await thread.SendMessageAsync(embed: embed.Build());
+        }
 
+        [Command("start")]
+        public async Task Start()
+        {
+            FetchItemMappings();
+            
+            Timer.Interval = Program.RefreshRate * 1000;
+            Timer.Elapsed += TimerTick;
+            Timer.Start();
+            
+            TimerTick(null, null);
+        }
+        
+        private async void TimerTick(object sender, EventArgs e)
+        {
+            Timer.Enabled = false;
+            
+            FetchItemPrices();
 
-            embed
-                .AddField(Emote.Parse("<:Sell:894836591590256660>") + "**Sell price** `has changed 18.12%`:", "\tChanged from `123` to `234`");
-
-            //Your embed needs to be built before it is able to be sent
-            await ReplyAsync(embed: embed.Build());
+            await ShowChangedPrices(20000, 20);
+            
+            Timer.Enabled = true;
         }
         
         [Command("show")]
         [Summary("Show the items with changed margins.")]
-        public Task ShowChangedPrices(int amount = 0, double minChangePercentage = 5)
+        public async Task ShowChangedPrices(int amount = 0, double minChangePercentage = 5)
         {
+            //TODO: When first time checking the prices, create a list with all the valid items that we should check, and just update them?
+            
             //TODO: Create separate methods for Buy and Sell price checks/dips:
             //TODO: Price dip contains Buy price, it's drop, etc.   Price rise contains Sell price, it's increase, etc.
             
@@ -86,21 +92,19 @@ namespace FloppaFlipper.Modules
             
             //TODO: Separate the members and non-members items.
             
-            //TODO: Only select items that have a high enough volume.
-            
             //TODO: For accepted items get their price history at https://prices.runescape.wiki/api/v1/osrs/timeseries?timestep=5m&id=4151
             //TODO: and generate a chart for them at https://quickchart.io/documentation/sparkline-api/ .
             
             // Only execute for items we would like to potentially flip. Skip the ones with not enough price data.
-            foreach (ItemInfo item in infoList.Take(amount))
+            foreach (ItemDataSet item in infoList.Take(amount))
             {
                 // Check if we have got enough info of the prices of the item
-                if(item._24hInfo == null) continue;
-                if(item._6hInfo == null) continue;
-                if(item._1hInfo == null) continue;
+                if(item._24hAverage == null) continue;
+                if(item._6hAverage == null) continue;
+                if(item._1hAverage == null) continue;
                 
                 // Check that the item price is great enough
-                if(!long.TryParse(item._24hInfo.AvgBuyPrice, out long price) || price < Program.MinBuyPrice) continue;
+                if(!long.TryParse(item._24hAverage.AvgBuyPrice, out long price) || price < Program.MinBuyPrice) continue;
                 
                 // Check if the item has not raised a notification in a while
                 if(DateTime.Now.Subtract(item.TimeLastNotified).TotalMinutes < Program.ItemNotificationCooldown) continue;
@@ -112,10 +116,10 @@ namespace FloppaFlipper.Modules
                 if(Math.Abs(item.GetChangePercentage(true)) < minChangePercentage) continue;
                 
                 // Check that the item has been traded in the last hour
-                if(!long.TryParse(item._1hInfo.BuyPriceVolume, out long result) || result < 3) continue;
+                if(!long.TryParse(item._1hAverage.BuyPriceVolume, out long result) || result < 3) continue;
                 
                 // Check that the item has great enough volume
-                if(!long.TryParse(item._24hInfo.BuyPriceVolume, out long volume) || volume < Program.MinTradedVolume) continue;
+                if(!long.TryParse(item._24hAverage.BuyPriceVolume, out long volume) || volume < Program.MinTradedVolume) continue;
                 
                 // Get the 5m time series for this item
                 string timeSeriesJson = FetchPriceJson(TimeSeriesApiEndpoint, item.Id);
@@ -132,7 +136,8 @@ namespace FloppaFlipper.Modules
 
                 string labelsString = "";
                 string dataString = "";
-                foreach (TimeSeriesDataSet dataSet in dataSets.Skip(Math.Max(0, dataSets.Count - 100)))
+                // Only select the last 72 items, to match the 6 hour info
+                foreach (TimeSeriesDataSet dataSet in dataSets.Skip(Math.Max(0, dataSets.Count - 72)))
                 {
                     if (dataSet.AvgHighPrice == null)
                     {
@@ -178,19 +183,36 @@ namespace FloppaFlipper.Modules
                 
                 // Build the embed
                 EmbedBuilder embed = new();
+                ComponentBuilder comp = new();
+                comp.WithSelectMenu(
+                    new SelectMenuBuilder()
+                    {
+                        CustomId = "NotifyMeSelectMenu",
+                        Disabled = false,
+                        Placeholder = "Select when to notify if the item recovers:",
+                        MinValues = 1,
+                        MaxValues = 1,
+                        Options = new List<SelectMenuOptionBuilder>()
+                        {
+                            new("1h average", "when the item reaches the 1h average price"),
+                            new("6h average", "when the item reaches the 6h average price"),
+                            new("12h average", "when the item reaches the 12h average price")
+                        }
+                    }
+                );
 
                 string change = "dropped";
                 
-                if (double.Parse(item.CurrentBuy) > double.Parse(item._6hInfo.AvgBuyPrice)) change = "increased";
+                if (double.Parse(item.LatestBuy) > double.Parse(item._6hAverage.AvgBuyPrice)) change = "increased";
                 
                 
                 embed
                     .WithTitle($"**{item.Name}** | potential dip!")
                 
                     .WithDescription(
-                        $"[Wiki]({item.WikiPage}) | [prices.runescape.wiki]({PriceInfoPageApiEndpoint + item.Id}) | [GE-tracker]({GeTrackerPageApiEndpoint + item.Id})")
+                        $"[Wiki]({item.WikiLink}) | [prices.runescape.wiki]({PriceInfoPageApiEndpoint + item.Id}) | [GE-tracker]({GeTrackerPageApiEndpoint + item.Id})")
                 
-                    .WithThumbnailUrl(IconsApiEndpoint + item.Id)
+                    .WithThumbnailUrl(item.IconLink)
                 
                     .WithColor(GetColorByPercent(item.GetChangePercentage(true)))
                 
@@ -200,46 +222,52 @@ namespace FloppaFlipper.Modules
 
                 
                 embed
-                    .AddField("Today's **buy** volume: " + item._24hInfo.BuyPriceVolume,
-                        "Last hour: " + item._1hInfo.BuyPriceVolume);
+                    .AddField("Today's **buy** volume: " + item._24hAverage.BuyPriceVolume,
+                        "Last hour: " + item._1hAverage.BuyPriceVolume);
 
                 
                 embed
-                    .AddField("Today's **sell** volume: " + item._24hInfo.SellPriceVolume,
-                        "Last hour: " + item._1hInfo.SellPriceVolume);
+                    .AddField("Today's **sell** volume: " + item._24hAverage.SellPriceVolume,
+                        "Last hour: " + item._1hAverage.SellPriceVolume);
                 
 
                 embed
                     .AddField(Emote.Parse("<:Buy:894836544442093568>") + $"**Buy price** `has {change} {item.GetChangePercentage(true):F2}%`:",
-                        $"\tLast 6h's average `{item._6hInfo.AvgBuyPrice}` dropped to `{item.CurrentBuy}`");
+                        $"\tLast 6h's average `{item._6hAverage.AvgBuyPrice}` dropped to `{item.LatestBuy}`");
 
                 
                 embed
                     .AddField(Emote.Parse("<:Sell:894836591590256660>") + $"**Sell price** `has {change} {item.GetChangePercentage(false):F2}%`:",
-                        $"\tLast 6h's average `{item._6hInfo.AvgSellPrice}` dropped to `{item.CurrentSell}`");
+                        $"\tLast 6h's average `{item._6hAverage.AvgSellPrice}` dropped to `{item.LatestSell}`");
 
 
                 embed
                     .WithImageUrl(qc.GetShortUrl());
                 
+                
                 item.TimeLastNotified = DateTime.Now;
 
-                ReplyAsync(embed: embed.Build());
+                await ReplyAsync(embed: embed.Build());
+
+                await ReplyAsync("🔔 ding dong bing bong 🔔", component: comp.Build());
             }
 
             Emoji tUp = new("👍");
 
-            if (amount >= 1) return Context.Message.AddReactionAsync(tUp);
+            if (amount >= 1)
+            {
+                await Context.Message.AddReactionAsync(tUp);
+                return;
+            }
             
-            ReplyAsync("Invalid count", false, null, null, null, Context.Message.Reference);
+            await ReplyAsync("Invalid count", false, null, null, null, Context.Message.Reference);
                 
             tUp = new Emoji("❌");
 
-
-            return Context.Message.AddReactionAsync(tUp);
+            await Context.Message.AddReactionAsync(tUp);
         }
-        
-        public static void FetchItemMappings()
+
+        private static void FetchItemMappings()
         {
             Console.WriteLine("Querying item data...");
             
@@ -258,39 +286,38 @@ namespace FloppaFlipper.Modules
                 infoJsonString = reader.ReadToEnd();
             }
             
-            infoList = JsonConvert.DeserializeObject<List<ItemInfo>>(infoJsonString);
+            infoList = JsonConvert.DeserializeObject<List<ItemDataSet>>(infoJsonString);
             
             if (infoList == null) return;
             
-            foreach (ItemInfo info in infoList)
+            foreach (ItemDataSet info in infoList)
             {
                 InfoDict.Add(info.Id, info);    //BUG: System.ArgumentException: An item with the same key has already been added. Key: 10344.
             }
             
             Console.WriteLine("Done!\n");
         }
-        
-        public static void TimerTick(object sender, EventArgs e)
-        {
-            FetchItemPrices();
-        }
-        
+
         private static void FetchItemPrices()
         {
             // Get the latest prices for all items
-            Console.WriteLine("Fetching...");
-            string latestPricesJson = FetchPriceJson(LatestPricesApiEndpoint, -1);
+            Console.WriteLine("Fetching prices...");
+            string latestPricesJson = FetchPriceJson(ConfigHandler.Config.LatestPricesApiEndpoint, -1);
             
             // Get the 1h prices for all items
-            string _1hPricesJson = FetchPriceJson(_1HourPricesApiEndpoint, -1);
+            string _5mPricesJson = FetchPriceJson(ConfigHandler.Config._5MinPricesApiEndpoint, -1);
+            
+            // Get the 1h prices for all items
+            string _1hPricesJson = FetchPriceJson(ConfigHandler.Config._1HourPricesApiEndpoint, -1);
             
             // Get the 6h prices for all items
-            string _6hPricesJson = FetchPriceJson(_6HourPricesApiEndpoint, -1);
+            string _6hPricesJson = FetchPriceJson(ConfigHandler.Config._6HourPricesApiEndpoint, -1);
             
             // Get the 24h prices for all items
-            string _24hPricesJson = FetchPriceJson(_24HourPricesApiEndpoint, -1);
+            string _24hPricesJson = FetchPriceJson(ConfigHandler.Config._24HourPricesApiEndpoint, -1);
             
             JArray latestPriceObjects = JArray.Parse(latestPricesJson);
+            JArray _5mPriceObjects = JArray.Parse(_5mPricesJson);
             JArray _1hPriceObjects = JArray.Parse(_1hPricesJson);
             JArray _6hPriceObjects = JArray.Parse(_6hPricesJson);
             JArray _24hPriceObjects = JArray.Parse(_24hPricesJson);
@@ -301,27 +328,51 @@ namespace FloppaFlipper.Modules
                 JObject latestObject = (JObject)t;
                 foreach((string itemId, var value) in latestObject)
                 {
-                    if (!InfoDict.TryGetValue(int.Parse(itemId), out ItemInfo itemInfo)) continue;
+                    if (!InfoDict.TryGetValue(int.Parse(itemId), out ItemDataSet itemInfo)) continue;
                     
                     if(long.TryParse((string) value["highTime"] ?? string.Empty, out long unixH))   //NOTE: Changed from doubles to longs
                     {
                         DateTime highTime = UnixTimeStampToDateTime(unixH);
                         
-                        itemInfo.LatestAvailableBuyTime = highTime;
+                        itemInfo.LatestBuyTime = highTime;
                     }
 
                     if (long.TryParse((string) value["lowTime"] ?? string.Empty, out long unixL))   //NOTE: Changed from doubles to longs
                     {
                         DateTime lowTime = UnixTimeStampToDateTime(unixL);
                         
-                        itemInfo.LatestAvailableSellTime = lowTime;
+                        itemInfo.LatestSellTime = lowTime;
                     }
                     
                     string high = (string)value["high"];
-                    itemInfo.CurrentBuy = high;
+                    itemInfo.LatestBuy = high;
                     
                     string low = (string)value["low"];
-                    itemInfo.CurrentSell = low;
+                    itemInfo.LatestSell = low;
+                }
+            }
+
+            foreach (JToken t in _5mPriceObjects)
+            {
+                // Parse the 1h object
+                JObject _5mObject = (JObject)t;
+                foreach((string itemId, var value) in _5mObject)
+                {
+                    PriceAverageDataSet datedInfo = new();
+                    
+                    string avgHigh = (string)value["avgHighPrice"];
+                    datedInfo.AvgBuyPrice = avgHigh;
+                    
+                    string highVol = (string)value["highPriceVolume"];
+                    datedInfo.BuyPriceVolume = highVol;
+                    
+                    string avgLow = (string)value["avgLowPrice"];
+                    datedInfo.AvgSellPrice = avgLow;
+                    
+                    string lowVol = (string)value["lowPriceVolume"];
+                    datedInfo.SellPriceVolume = lowVol;
+                    
+                    InfoDict[int.Parse(itemId)]._5mAverage = datedInfo;
                 }
             }
 
@@ -331,7 +382,7 @@ namespace FloppaFlipper.Modules
                 JObject _1hObject = (JObject)t;
                 foreach((string itemId, var value) in _1hObject)
                 {
-                    DatedItemInfo datedInfo = new();
+                    PriceAverageDataSet datedInfo = new();
                     
                     string avgHigh = (string)value["avgHighPrice"];
                     datedInfo.AvgBuyPrice = avgHigh;
@@ -345,7 +396,7 @@ namespace FloppaFlipper.Modules
                     string lowVol = (string)value["lowPriceVolume"];
                     datedInfo.SellPriceVolume = lowVol;
                     
-                    InfoDict[int.Parse(itemId)]._1hInfo = datedInfo;
+                    InfoDict[int.Parse(itemId)]._1hAverage = datedInfo;
                 }
             }
 
@@ -355,7 +406,7 @@ namespace FloppaFlipper.Modules
                 JObject _6hObject = (JObject)t;
                 foreach((string itemId, var value) in _6hObject)
                 {
-                    DatedItemInfo datedInfo = new();
+                    PriceAverageDataSet datedInfo = new();
                     
                     string avgHigh = (string)value["avgHighPrice"];
                     datedInfo.AvgBuyPrice = avgHigh;
@@ -369,7 +420,7 @@ namespace FloppaFlipper.Modules
                     string lowVol = (string)value["lowPriceVolume"];
                     datedInfo.SellPriceVolume = lowVol;
                     
-                    InfoDict[int.Parse(itemId)]._6hInfo = datedInfo;
+                    InfoDict[int.Parse(itemId)]._6hAverage = datedInfo;
                 }
             }
 
@@ -379,7 +430,7 @@ namespace FloppaFlipper.Modules
                 JObject _24hObject = (JObject)t;
                 foreach((string itemId, var value) in _24hObject)
                 {
-                    DatedItemInfo datedInfo = new();
+                    PriceAverageDataSet datedInfo = new();
                     
                     string avgHigh = (string)value["avgHighPrice"];
                     datedInfo.AvgBuyPrice = avgHigh;
@@ -393,7 +444,7 @@ namespace FloppaFlipper.Modules
                     string lowVol = (string)value["lowPriceVolume"];
                     datedInfo.SellPriceVolume = lowVol;
                     
-                    InfoDict[int.Parse(itemId)]._24hInfo = datedInfo;
+                    InfoDict[int.Parse(itemId)]._24hAverage = datedInfo;
                 }
             }
             
@@ -428,34 +479,32 @@ namespace FloppaFlipper.Modules
                 json = reader.ReadToEnd();
             }
 
-            switch (endpoint)
+            if (endpoint ==  ConfigHandler.Config._5MinPricesApiEndpoint ||
+                endpoint ==  ConfigHandler.Config._1HourPricesApiEndpoint ||
+                endpoint ==  ConfigHandler.Config._6HourPricesApiEndpoint ||
+                endpoint ==  ConfigHandler.Config._24HourPricesApiEndpoint)
             {
-                case _1HourPricesApiEndpoint or _6HourPricesApiEndpoint or _24HourPricesApiEndpoint:
-                    Console.WriteLine("_hour");
-                    json = json[..json.LastIndexOf(',')];
-                    json = json.Insert(json.Length, "}");
+                json = json[..json.LastIndexOf(',')];
+                json = json.Insert(json.Length, "}");
 
-                    json = json[8..];
-                    json = json.Remove(json.Length - 1);
+                json = json[8..];
+                json = json.Remove(json.Length - 1);
 
-                    json = json.Insert(0, "[");
-                    json = json.Insert(json.Length, "]");
-                    break;
-                
-                case LatestPricesApiEndpoint:
-                    Console.WriteLine("latest");
-                    json = json[8..];
-                    json = json.Remove(json.Length - 1);
+                json = json.Insert(0, "[");
+                json = json.Insert(json.Length, "]");
+            }
+            else if (endpoint == ConfigHandler.Config.LatestPricesApiEndpoint)
+            {
+                json = json[8..];
+                json = json.Remove(json.Length - 1);
 
-                    json = json.Insert(0, "[");
-                    json = json.Insert(json.Length, "]");
-                    break;
-                
-                case TimeSeriesApiEndpoint:
-                    Console.WriteLine("timeSeries");
-                    json = json[8..];
-                    json = json[..json.LastIndexOf(',')];
-                    break;
+                json = json.Insert(0, "[");
+                json = json.Insert(json.Length, "]");
+            }
+            else if (endpoint == ConfigHandler.Config.TimeSeriesApiEndpoint)
+            {
+                json = json[8..];
+                json = json[..json.LastIndexOf(',')];
             }
 
             return json;
@@ -470,36 +519,18 @@ namespace FloppaFlipper.Modules
 
         private static Color GetColorByPercent(double percent)
         {
-            Color color = Color.Default;
-
-            switch (percent)
+            Color color = Math.Abs(percent) switch
             {
-                case < 5:
-                {
-                    color = Color.Blue;
-                    break;
-                }
-                
-                case < 10:
-                {
-                    color = Color.LightOrange;
-                    break;
-                }
-                
-                case < 20:
-                {
-                    color = Color.Orange;
-                    break;
-                }
-                
-                case > 20:
-                {
-                    color = Color.Red;
-                    break;
-                }
-            }
+                < 5 => Color.Blue,
+                < 10 => Color.LightOrange,
+                < 20 => Color.Orange,
+                > 20 => Color.Red,
+                _ => Color.Default
+            };
 
             return color;
         }
+        
+        */
     }
 }

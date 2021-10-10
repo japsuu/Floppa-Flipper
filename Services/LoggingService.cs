@@ -13,7 +13,20 @@ namespace FloppaFlipper.Services
         {
             client.Log += LogAsync;
             command.Log += LogAsync;
+            
+            Console.WriteLine("[LOGGING SERVICE STARTED]");
         }
+
+        public Task LogError(object message)
+        {
+            ConsoleColor originalColor = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[ERROR]: " + message);
+            Console.ForegroundColor = originalColor;
+            
+            return Task.CompletedTask;
+        }
+        
         private Task LogAsync(LogMessage message)
         {
             if (message.Exception is CommandException cmdException)
