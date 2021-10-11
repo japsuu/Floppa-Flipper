@@ -1,21 +1,18 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj": {}
+    "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj": {}
   },
   "projects": {
-    "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj": {
+    "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj",
+        "projectUniqueName": "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj",
         "projectName": "FloppaFlipper",
-        "projectPath": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj",
+        "projectPath": "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj",
         "packagesPath": "C:\\Users\\japsu\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\obj\\",
+        "outputPath": "D:\\Rider Projects\\floppa-flipper\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
-        ],
         "configFilePaths": [
           "C:\\Users\\japsu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
@@ -25,7 +22,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Users\\japsu\\Downloads": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -88,7 +84,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.401\\RuntimeIdentifierGraph.json"
         }
       }
     }

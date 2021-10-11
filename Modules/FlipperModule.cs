@@ -17,8 +17,7 @@ using QuickChart;
 namespace FloppaFlipper.Modules
 {
     public class FlipperModule : ModuleBase<SocketCommandContext>
-    {
-        /*
+    {/*
         private static readonly Dictionary<int, ItemDataSet> InfoDict = new();
         private static List<ItemDataSet> infoList = new();
 

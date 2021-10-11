@@ -16,7 +16,7 @@ namespace FloppaFlipper.Services
         private readonly HashSet<uint> idBlacklist;
         
         /// <summary>
-        /// Key = item ID, Value = itemData.
+        /// Key = item ID, Value = itemData. Does not contain any blacklisted items.
         /// </summary>
         public readonly Dictionary<uint, ItemDataSet> ItemDataDict = new();
         

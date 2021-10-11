@@ -137,6 +137,48 @@ namespace FloppaFlipper.Datasets
         /// </summary>
         public PriceAverageDataSet _24hAverage { get; set; }
 
+        public bool IsFlippable()
+        {
+            // Check if the item has not raised a notification in a while
+            if(DateTime.Now.Subtract(TimeLastNotified).TotalMinutes < ConfigHandler.Config.ItemNotificationCooldown) return false;
+            
+            // Check if we have got enough info of the prices of the item
+            if(_24hAverage == null) return false;
+            if(_6hAverage == null) return false;
+            if(_1hAverage == null) return false;
+            if(_5mAverage == null) return false;
+                
+            // Check that the item price is great enough
+            if(!long.TryParse(_24hAverage.AvgBuyPrice, out long price) || price < ConfigHandler.Config.MinBuyPrice) return false;
+                
+            // Check that the item volume is great enough
+            if(!long.TryParse(_24hAverage.BuyPriceVolume, out long volume) || volume < ConfigHandler.Config.MinTradedVolume) return false;
+
+            return true;
+        }
+
+        public bool HasCrashed(double percentage)
+        {
+            // Check if it's a dip
+            if(GetChangePercentage(false) > 0) return false;
+                
+            // Check that the item's change percentage is great enough
+            if(Math.Abs(GetChangePercentage(false)) < percentage) return false;
+
+            return true;
+        }
+
+        public bool HasSpiked(double percentage)
+        {
+            // Check if it's a spike
+            if(GetChangePercentage(false) < 0) return false;
+                
+            // Check that the item's change percentage is great enough
+            if(Math.Abs(GetChangePercentage(false)) < percentage) return false;
+
+            return true;
+        }
+
         public override string ToString()
         {
             return $"{Name}: ID: {Id}, 1hAvg: {_1hAverage}";
