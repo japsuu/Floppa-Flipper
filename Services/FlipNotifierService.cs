@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using FloppaFlipper.Datasets;
 using FloppaFlipper.Handlers;
-using Newtonsoft.Json;
-using QuickChart;
 
 namespace FloppaFlipper.Services
 {
@@ -36,11 +36,7 @@ namespace FloppaFlipper.Services
 
                 foreach (ItemDataSet item in priceCrashes)
                 {
-                    // Get the 5m time series for this item
-                    string timeSeriesJson = await JsonHandler.FetchPriceJson(ConfigHandler.Config.TimeSeriesApiEndpoint, item.Id);
-                
-                    List<TimeSeriesDataSet> dataSets = JsonConvert.DeserializeObject<List<TimeSeriesDataSet>>(timeSeriesJson);
-
+                    /*
                     #region Building the sparkline
 
                         if (dataSets == null)
@@ -63,7 +59,7 @@ namespace FloppaFlipper.Services
                             else
                             {
                                 labelsString += $"'{Helpers.UnixTimeStampToDateTime(dataSet.Timestamp).ToLongTimeString()}'";
-                                dataString += dataSet.AvgHighPrice;
+                                dataString += dataSet.AvgLowPrice;
                             }
                         
                             if (dataString.Length > ConfigHandler.Config.MaxSparklineDatasetLength ||
@@ -98,7 +94,7 @@ namespace FloppaFlipper.Services
                         };
 
                     #endregion
-                    
+*/                    
                     // Build the embed
                     EmbedBuilder embed = new();
                     ComponentBuilder comp = new();
@@ -118,10 +114,13 @@ namespace FloppaFlipper.Services
                             }
                         }
                     );
-    
-                    string change = "dropped";
                     
-                    if (double.Parse(item.LatestBuy) > double.Parse(item._6hAverage.AvgBuyPrice)) change = "increased";
+                    Console.WriteLine(item._5mAverage.AvgBuyPrice);
+                    string buyChange = "dropped";
+                    if (double.Parse(item._5mAverage.AvgBuyPrice) > double.Parse(item._6hAverage.AvgBuyPrice)) buyChange = "increased";
+                    
+                    string sellChange = "dropped";
+                    if (double.Parse(item._5mAverage.AvgSellPrice) > double.Parse(item._6hAverage.AvgSellPrice)) sellChange = "increased";
                     
                     
                     embed
@@ -132,7 +131,7 @@ namespace FloppaFlipper.Services
                     
                         .WithThumbnailUrl(item.IconLink)
                     
-                        .WithColor(Helpers.GetColorByPercent(item.GetChangePercentage(true)))
+                        .WithColor(Helpers.GetColorByPercent(await item.GetChangePercentage(false)))
                     
                         .WithFooter(footer => footer.Text = "Flip fo no hoe")
                     
@@ -150,25 +149,43 @@ namespace FloppaFlipper.Services
                     
     
                     embed
-                        .AddField(Emote.Parse("<:Buy:894836544442093568>") + $"**Buy price** `has {change} {item.GetChangePercentage(true):F2}%`:",
-                            $"\tLast 6h's average `{item._6hAverage.AvgBuyPrice}` dropped to `{item.LatestBuy}`");
+                        .AddField(Emote.Parse("<:Buy:894836544442093568>") + $"**Buy price** `has {buyChange} {await item.GetChangePercentage(true):F2}%`:",
+                            $"\tLast 6h's average `{item._6hAverage.AvgBuyPrice}` dropped to `{item._5mAverage.AvgBuyPrice}`");
     
                     
                     embed
-                        .AddField(Emote.Parse("<:Sell:894836591590256660>") + $"**Sell price** `has {change} {item.GetChangePercentage(false):F2}%`:",
-                            $"\tLast 6h's average `{item._6hAverage.AvgSellPrice}` dropped to `{item.LatestSell}`");
+                        .AddField(Emote.Parse("<:Sell:894836591590256660>") + $"**Sell price** `has {sellChange} {await item.GetChangePercentage(false):F2}%`:",
+                            $"\tLast 6h's average `{item._6hAverage.AvgSellPrice}` dropped to `{item._5mAverage.AvgSellPrice}`");
     
-    
-                    embed
-                        .WithImageUrl(qc.GetShortUrl());
+                    //embed
+                    //    .WithImageUrl(qc.GetShortUrl());
                     
+                    string path = Helpers.GetGraphBackgroundPath();
+
+                    if (item._5mTimeSeries != null)
+                    {
+                        List<TimeSeriesDataSet> data = item._5mTimeSeries.Skip(Math.Max(0, item._5mTimeSeries.Count - 280)).ToList();
+
+                        Bitmap bmp = Helpers.DrawGraph(path, data);
+            
+                        await using MemoryStream imgStream = new MemoryStream(Helpers.ImageToBytes(bmp));
+            
+                        embed.WithImageUrl("attachment://graph.png");
+                        await socketChannel.SendFileAsync(imgStream, "graph.png", "", false, embed.Build());
+
+                        await socketChannel.SendMessageAsync("🔔 ding dong bing bong 🔔", component: comp.Build());
                     
-                    item.TimeLastNotified = DateTime.Now;
-    
-                    await socketChannel.SendMessageAsync(embed: embed.Build());
+                        item.TimeLastNotified = DateTime.Now;
+                    }
+                    else
+                    {
+                        await socketChannel.SendMessageAsync(embed: embed.Build());
+
+                        await socketChannel.SendMessageAsync("🔔 ding dong bing bong 🔔", component: comp.Build());
+                    }
                 }
                 
-                await socketChannel.SendMessageAsync("Rawr: " + priceCrashes.Count + " : " + priceSpikes.Count);
+                //await socketChannel.SendMessageAsync("Rawr: " + priceCrashes.Count + " : " + priceSpikes.Count);
             }
         }
     }

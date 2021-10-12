@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using FloppaFlipper.Handlers;
 using Newtonsoft.Json;
 
@@ -136,6 +138,8 @@ namespace FloppaFlipper.Datasets
         /// Price average of the latest 24 hours.
         /// </summary>
         public PriceAverageDataSet _24hAverage { get; set; }
+        
+        public List<TimeSeriesDataSet> _5mTimeSeries { get; set; }
 
         public bool IsFlippable()
         {
@@ -147,6 +151,10 @@ namespace FloppaFlipper.Datasets
             if(_6hAverage == null) return false;
             if(_1hAverage == null) return false;
             if(_5mAverage == null) return false;
+
+            if (string.IsNullOrEmpty(_5mAverage.AvgSellPrice) || string.IsNullOrEmpty(_5mAverage.AvgBuyPrice) ||
+                _5mAverage.AvgBuyPrice == "not available" || _5mAverage.AvgSellPrice == "not available")
+                return false;
                 
             // Check that the item price is great enough
             if(!long.TryParse(_24hAverage.AvgBuyPrice, out long price) || price < ConfigHandler.Config.MinBuyPrice) return false;
@@ -157,24 +165,36 @@ namespace FloppaFlipper.Datasets
             return true;
         }
 
-        public bool HasCrashed(double percentage)
+        private async Task Get5MinTimeSeries()
         {
+            // Get the 5m time series for this item
+            string timeSeriesJson = await JsonHandler.FetchPriceJson(ConfigHandler.Config.TimeSeriesApiEndpoint, Id);
+                
+            _5mTimeSeries = JsonConvert.DeserializeObject<List<TimeSeriesDataSet>>(timeSeriesJson);
+        }
+
+        public async Task<bool> HasCrashed(double percentage)
+        {
+            double value = await GetChangePercentage(false);
+            
             // Check if it's a dip
-            if(GetChangePercentage(false) > 0) return false;
+            if(value > 0) return false;
                 
             // Check that the item's change percentage is great enough
-            if(Math.Abs(GetChangePercentage(false)) < percentage) return false;
+            if(Math.Abs(value) < percentage) return false;
 
             return true;
         }
 
-        public bool HasSpiked(double percentage)
+        public async Task<bool> HasSpiked(double percentage)
         {
+            double value = await GetChangePercentage(true);
+            
             // Check if it's a spike
-            if(GetChangePercentage(false) < 0) return false;
+            if(value < 0) return false;
                 
             // Check that the item's change percentage is great enough
-            if(Math.Abs(GetChangePercentage(false)) < percentage) return false;
+            if(Math.Abs(value) < percentage) return false;
 
             return true;
         }
@@ -184,26 +204,33 @@ namespace FloppaFlipper.Datasets
             return $"{Name}: ID: {Id}, 1hAvg: {_1hAverage}";
         }
 
+        // Used to be how many percents the item's 5m average price is relative to the last 6h average price.
         /// <summary>
-        /// Percentage of price fluctuation in the last 6h.
+        /// Percentage of price fluctuation in the last 10m.
         /// </summary>
-        /// <returns>How many percents the item's 5m average price is relative to the last 6h average price.</returns>
+        /// <returns>How many percents the item's latest 5m average price is relative to the last 10min average price (excluding the latest 5min).</returns>
         /// <param name="isBuy">Set to true if you want the percentage of buy value change, false if sell value change.</param>
-        public double GetChangePercentage(bool isBuy)
+        public async Task<double> GetChangePercentage(bool isBuy)
         {
+            await Get5MinTimeSeries();
+            
             if (isBuy)
             {
-                if (!long.TryParse(_5mAverage.AvgBuyPrice, out long currentAverage)) return 0;
-                if (!long.TryParse(_6hAverage.AvgBuyPrice, out long oldAverage)) return 0;
+                if (_5mTimeSeries[^1].AvgHighPrice == null) return 0;
+                if (_5mTimeSeries[^2].AvgHighPrice == null) return 0;
+                //if (!long.TryParse(_5mAverage.AvgBuyPrice, out long currentAverage)) return 0;
+                //if (!long.TryParse(_6hAverage.AvgBuyPrice, out long oldAverage)) return 0;
             
-                return CalculateChangePercentage(oldAverage, currentAverage);
+                return CalculateChangePercentage((int)_5mTimeSeries[^2].AvgHighPrice, (int)_5mTimeSeries[^1].AvgHighPrice);
             }
             else
             {
-                if (!long.TryParse(_5mAverage.AvgSellPrice, out long currentAverage)) return 0;
-                if (!long.TryParse(_6hAverage.AvgSellPrice, out long oldAverage)) return 0;
+                if (_5mTimeSeries[^1].AvgLowPrice == null) return 0;
+                if (_5mTimeSeries[^2].AvgLowPrice == null) return 0;
+                //if (!long.TryParse(_5mAverage.AvgSellPrice, out long currentAverage)) return 0;
+                //if (!long.TryParse(_6hAverage.AvgSellPrice, out long oldAverage)) return 0;
             
-                return CalculateChangePercentage(oldAverage, currentAverage);
+                return CalculateChangePercentage((int)_5mTimeSeries[^2].AvgLowPrice, (int)_5mTimeSeries[^1].AvgLowPrice);
             }
         }
 

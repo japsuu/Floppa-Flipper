@@ -10,6 +10,7 @@ namespace FloppaFlipper.Handlers
         public int MaxSparklineDatasetLength;
         public int MinTradedVolume;
         public int MinBuyPrice;
+        public double MinPriceChangePercentage;
         
         public string LatestPricesApiEndpoint;
         public string _5MinPricesApiEndpoint;

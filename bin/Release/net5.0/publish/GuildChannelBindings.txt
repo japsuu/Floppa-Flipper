@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<guildChannelBindings>
+  <guildChannelBinding key="894462128977743893" value="894462233256529972" />
+</guildChannelBindings>

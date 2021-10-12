@@ -26,16 +26,9 @@ C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\System.Linq.Async.dl
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.DependencyInjection.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\System.Runtime.CompilerServices.Unsafe.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Abstractions.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Options.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Primitives.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.dll
 C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.Abstractions.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Configuration.Binder.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Configuration.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Logging.Console.dll
-C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
 D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.exe
 D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.deps.json
 D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\FloppaFlipper.runtimeconfig.json
@@ -100,3 +93,5 @@ D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\runtimes\unix\lib\netcoreapp3.
 D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\runtimes\win\lib\netcoreapp3.0\System.Drawing.Common.dll
 D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
 D:\Rider Projects\floppa-flipper\bin\Debug\net5.0\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
+C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Media\graph_background.png
+C:\Users\japsu\RiderProjects\FloppaFlipper\bin\Debug\net5.0\Fonts\runescape_uf.ttf

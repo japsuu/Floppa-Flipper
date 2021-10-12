@@ -33,6 +33,11 @@ namespace FloppaFlipper
         private static LoggingService loggingService;
         private static FlipFinderService flipFinderService;
 
+        public static void ForceFlips()
+        {
+            flipFinderService.TimerTick(null, null);
+        }
+
         private static async Task MainAsync()
         {
             // Create the Discord socket client

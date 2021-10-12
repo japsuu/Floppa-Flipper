@@ -37,6 +37,8 @@ namespace FloppaFlipper.Services
 
             // Get the JSON as a string
             string infoJsonString = await JsonHandler.FetchJsonFromEndpoint(ConfigHandler.Config.MappingApiEndpoint);
+
+            if (infoJsonString == null) return;
             
             // Deserialize the JSON to an array of data objects
             List<ItemDataSet> itemDataSets = JsonConvert.DeserializeObject<List<ItemDataSet>>(infoJsonString);

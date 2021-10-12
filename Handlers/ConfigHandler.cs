@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -180,6 +181,19 @@ namespace FloppaFlipper.Handlers
                             }
 
                             Config.BlacklistedItemIds = values;
+                            break;
+                        }
+                        
+                        case nameof(Config.MinPriceChangePercentage):
+                        {
+                            if (!double.TryParse(value, NumberStyles.Number, CultureInfo.CreateSpecificCulture ("en-US"), out double result))
+                            {
+                                Console.WriteLine("[ERROR]: MinPriceChangePercentage contains an invalid value: " + value);
+                                
+                                continue;
+                            }
+
+                            Config.MinPriceChangePercentage = result;
                             break;
                         }
                     }

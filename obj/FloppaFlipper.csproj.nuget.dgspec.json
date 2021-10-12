@@ -1,18 +1,21 @@
 {
   "format": 1,
   "restore": {
-    "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj": {}
+    "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj": {}
   },
   "projects": {
-    "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj": {
+    "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj",
+        "projectUniqueName": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj",
         "projectName": "FloppaFlipper",
-        "projectPath": "D:\\Rider Projects\\floppa-flipper\\FloppaFlipper.csproj",
+        "projectPath": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\FloppaFlipper.csproj",
         "packagesPath": "C:\\Users\\japsu\\.nuget\\packages\\",
-        "outputPath": "D:\\Rider Projects\\floppa-flipper\\obj\\",
+        "outputPath": "C:\\Users\\japsu\\RiderProjects\\FloppaFlipper\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        ],
         "configFilePaths": [
           "C:\\Users\\japsu\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
@@ -22,6 +25,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Users\\japsu\\Downloads": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -52,10 +56,6 @@
               "target": "Package",
               "version": "[6.0.0-rc.1.21451.13, )"
             },
-            "Microsoft.Extensions.Logging.Console": {
-              "target": "Package",
-              "version": "[5.0.0, )"
-            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.1, )"
@@ -79,12 +79,31 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[5.0.9, 5.0.9]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.win-x64",
+              "version": "[5.0.9, 5.0.9]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
+              "version": "[5.0.9, 5.0.9]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.401\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.400\\RuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

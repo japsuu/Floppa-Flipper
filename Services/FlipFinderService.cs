@@ -42,21 +42,25 @@ namespace FloppaFlipper.Services
             timer.Start();
         }
         
-        private async void TimerTick(object sender, EventArgs e)
+        public async void TimerTick(object sender, EventArgs e)
         {
             timer.Enabled = false;
 
             await dataFetchService.UpdateItemPrices();
+            
+            Console.WriteLine("Calculating crashes & spikes...");
 
-            CalculateCrashedItems();
-            CalculateSpikedItems();
+            await CalculateCrashedItems();
+            await CalculateSpikedItems();
+            
+            Console.WriteLine("Done.");
 
             await flipNotifierService.NotifyFlips(crashedItems, spikedItems);
             
             timer.Enabled = true;
         }
 
-        private void CalculateCrashedItems()
+        private async Task CalculateCrashedItems()
         {
             crashedItems.Clear();
             
@@ -66,13 +70,13 @@ namespace FloppaFlipper.Services
                 if(!item.IsFlippable()) continue;
                 
                 // Check that the item has dipped
-                if(!item.HasCrashed(5.00)) continue;
+                if(!await item.HasCrashed(ConfigHandler.Config.MinPriceChangePercentage)) continue;
 
                 crashedItems.Add(item);
             }
         }
 
-        private void CalculateSpikedItems()
+        private async Task CalculateSpikedItems()
         {
             spikedItems.Clear();
             
@@ -82,7 +86,7 @@ namespace FloppaFlipper.Services
                 if(!item.IsFlippable()) continue;
                 
                 // Check that the item has dipped
-                if(!item.HasSpiked(5.00)) continue;
+                if(!await item.HasSpiked(ConfigHandler.Config.MinPriceChangePercentage)) continue;
 
                 spikedItems.Add(item);
             }
