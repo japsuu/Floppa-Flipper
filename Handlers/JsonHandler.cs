@@ -89,9 +89,9 @@ namespace FloppaFlipper.Handlers
 
                 return infoJsonString;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                Console.WriteLine("[WARNING]: Could not connect to the API successfully.");
+                Console.WriteLine("[WARNING]: Could not connect to the API successfully:\n" + e + "\n\n");
 
                 return null;
             }

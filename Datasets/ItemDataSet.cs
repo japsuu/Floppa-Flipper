@@ -169,6 +169,8 @@ namespace FloppaFlipper.Datasets
         {
             // Get the 5m time series for this item
             string timeSeriesJson = await JsonHandler.FetchPriceJson(ConfigHandler.Config.TimeSeriesApiEndpoint, Id);
+            
+            if(timeSeriesJson == null) return;
                 
             _5mTimeSeries = JsonConvert.DeserializeObject<List<TimeSeriesDataSet>>(timeSeriesJson);
         }
@@ -182,6 +184,11 @@ namespace FloppaFlipper.Datasets
                 
             // Check that the item's change percentage is great enough
             if(Math.Abs(value) < percentage) return false;
+
+            if (!long.TryParse(_6hAverage.AvgSellPrice, out long _6hSell) ||
+                !long.TryParse(LatestSell, out long latestSell)) return false;
+            
+            if (Math.Abs(CalculateChangePercentage(_6hSell, latestSell)) < percentage) return false;
 
             return true;
         }
@@ -206,7 +213,7 @@ namespace FloppaFlipper.Datasets
 
         // Used to be how many percents the item's 5m average price is relative to the last 6h average price.
         /// <summary>
-        /// Percentage of price fluctuation in the last 10m.
+        /// Percentage of price fluctuation in the last 15m.
         /// </summary>
         /// <returns>How many percents the item's latest 5m average price is relative to the last 10min average price (excluding the latest 5min).</returns>
         /// <param name="isBuy">Set to true if you want the percentage of buy value change, false if sell value change.</param>
@@ -218,19 +225,25 @@ namespace FloppaFlipper.Datasets
             {
                 if (_5mTimeSeries[^1].AvgHighPrice == null) return 0;
                 if (_5mTimeSeries[^2].AvgHighPrice == null) return 0;
+                if (_5mTimeSeries[^3].AvgHighPrice == null) return 0;
+                int _10mAverage = ((int) _5mTimeSeries[^2].AvgHighPrice + (int) _5mTimeSeries[^3].AvgHighPrice) / 2;
+                int latest5MinAverage = (int) _5mTimeSeries[^1].AvgHighPrice;
                 //if (!long.TryParse(_5mAverage.AvgBuyPrice, out long currentAverage)) return 0;
                 //if (!long.TryParse(_6hAverage.AvgBuyPrice, out long oldAverage)) return 0;
             
-                return CalculateChangePercentage((int)_5mTimeSeries[^2].AvgHighPrice, (int)_5mTimeSeries[^1].AvgHighPrice);
+                return CalculateChangePercentage(_10mAverage, latest5MinAverage);
             }
             else
             {
                 if (_5mTimeSeries[^1].AvgLowPrice == null) return 0;
                 if (_5mTimeSeries[^2].AvgLowPrice == null) return 0;
+                if (_5mTimeSeries[^3].AvgLowPrice == null) return 0;
+                int _10mAverage = ((int) _5mTimeSeries[^2].AvgLowPrice + (int) _5mTimeSeries[^3].AvgLowPrice) / 2;
+                int latest5MinAverage = (int) _5mTimeSeries[^1].AvgLowPrice;
                 //if (!long.TryParse(_5mAverage.AvgSellPrice, out long currentAverage)) return 0;
                 //if (!long.TryParse(_6hAverage.AvgSellPrice, out long oldAverage)) return 0;
             
-                return CalculateChangePercentage((int)_5mTimeSeries[^2].AvgLowPrice, (int)_5mTimeSeries[^1].AvgLowPrice);
+                return CalculateChangePercentage(_10mAverage, latest5MinAverage);
             }
         }
 

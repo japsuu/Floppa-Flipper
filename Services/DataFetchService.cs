@@ -79,6 +79,8 @@ namespace FloppaFlipper.Services
             // Get the 24h prices for all items
             string _24hPricesJson = await JsonHandler.FetchPriceJson(ConfigHandler.Config._24HourPricesApiEndpoint);
             
+            if(latestPricesJson == null || _5mPricesJson == null || _1hPricesJson == null || _6hPricesJson == null || _24hPricesJson == null) return;
+            
             JArray latestPriceObjects = JArray.Parse(latestPricesJson);
             JArray _5mPriceObjects = JArray.Parse(_5mPricesJson);
             JArray _1hPriceObjects = JArray.Parse(_1hPricesJson);
@@ -224,7 +226,7 @@ namespace FloppaFlipper.Services
                 }
             }
             
-            Console.WriteLine("Item prices updated.");
+            Console.Write("-");
         }
     }
 }

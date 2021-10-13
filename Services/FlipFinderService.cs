@@ -48,12 +48,12 @@ namespace FloppaFlipper.Services
 
             await dataFetchService.UpdateItemPrices();
             
-            Console.WriteLine("Calculating crashes & spikes...");
+            Console.Write(":");
 
             await CalculateCrashedItems();
             await CalculateSpikedItems();
             
-            Console.WriteLine("Done.");
+            Console.Write(".");
 
             await flipNotifierService.NotifyFlips(crashedItems, spikedItems);
             
